@@ -1,4 +1,5 @@
-const { Tabs, Tab, TabList, TabPanels, TabPanel, Button, TabsSkeleton } = require('@carbon/react');
+const { Tabs, Tab, TabList, TabPanels, TabPanel, TabsSkeleton } = require('@carbon/react');
+import Image from 'next/image'
 
 type WaterMapsProps = {
     smallMapUrl: string,
@@ -19,11 +20,11 @@ const WaterMaps = ({ smallMapUrl, bigMapUrl, isLoading, emptyMessage }: WaterMap
                         <Tab>Detailed</Tab>
                     </TabList>
                     <TabPanels>
-                        <TabPanel>
-                            { bigMapUrl !== "" ? <img src={bigMapUrl}/> : <div>{emptyMessage}</div> }
+                        <TabPanel style={{ width: "100%", height: "420px", position: "relative" }}>
+                            { bigMapUrl !== "" ? <Image fill alt="Big map" src={bigMapUrl}/> : <div>{emptyMessage}</div> }
                         </TabPanel>
-                        <TabPanel>
-                            Tab Panel 2 <Button>Example button</Button>
+                        <TabPanel style={{ width: "100%", height: "420px", position: "relative" }}>
+                            { smallMapUrl !== "" ? <Image fill alt="Small map" src={smallMapUrl}/> : <div>{emptyMessage}</div> }
                         </TabPanel>
                     </TabPanels>
                 </Tabs>

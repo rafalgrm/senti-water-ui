@@ -1,5 +1,6 @@
 const {
     DataTable,
+    DataTableSkeleton,
     Table,
     TableHead,
     TableRow,
@@ -9,10 +10,19 @@ const {
     Pagination,
 } = require('@carbon/react');
 
-const WaterTable = ({ rows, headers, handleOnRowClick, totalRows, onTableChange }: any) => {
+const WaterTable = ({
+    rows,
+    headers,
+    handleOnRowClick,
+    totalRows,
+    onTableChange,
+    isTableLoading,
+}: any) => {
     return (
         <div>
-            <DataTable rows={rows} headers={headers}>
+            { isTableLoading
+            ? <DataTableSkeleton showHeader headers={headers} />
+            : (<DataTable rows={rows} headers={headers}>
                 {({ rows, headers, getTableProps, getHeaderProps, getRowProps }: any) => (
                     <Table {...getTableProps()}>
                         <TableHead>
@@ -35,7 +45,8 @@ const WaterTable = ({ rows, headers, handleOnRowClick, totalRows, onTableChange 
                         </TableBody>
                     </Table>
                 )}
-            </DataTable>
+            </DataTable>)
+            }
             <Pagination
                 itemsPerPageText="Water bodies per page:"
                 page={1}
@@ -50,7 +61,6 @@ const WaterTable = ({ rows, headers, handleOnRowClick, totalRows, onTableChange 
                 size="md"
             />
         </div>
-        
     )
 }
 
