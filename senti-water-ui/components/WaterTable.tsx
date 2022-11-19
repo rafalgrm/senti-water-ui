@@ -1,39 +1,66 @@
 const {
     DataTable,
+    DataTableSkeleton,
     Table,
     TableHead,
     TableRow,
     TableHeader,
     TableBody,
     TableCell,
+    Pagination,
 } = require('@carbon/react');
 
-const WaterTable = ({ rows, headers, handleOnRowClick }: any) => {
+const WaterTable = ({
+    rows,
+    headers,
+    handleOnRowClick,
+    totalRows,
+    onTableChange,
+    isTableLoading,
+}: any) => {
     return (
-        <DataTable rows={rows} headers={headers}>
-            {({ rows, headers, getTableProps, getHeaderProps, getRowProps }: any) => (
-                <Table {...getTableProps()}>
-                    <TableHead>
-                        <TableRow>
-                            {headers.map((header: any) => (
-                                <TableHeader key={header.key} {...getHeaderProps({ header })}>
-                                    {header.header}
-                                </TableHeader>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {rows.map((row: any) => (
-                            <TableRow key={row.id} {...getRowProps({ row })} onClick={handleOnRowClick}>
-                                {row.cells.map((cell: any) => (
-                                    <TableCell key={cell.id}>{cell.value}</TableCell>
+        <div>
+            { isTableLoading
+            ? <DataTableSkeleton showHeader headers={headers} />
+            : (<DataTable rows={rows} headers={headers}>
+                {({ rows, headers, getTableProps, getHeaderProps, getRowProps }: any) => (
+                    <Table {...getTableProps()}>
+                        <TableHead>
+                            <TableRow>
+                                {headers.map((header: any) => (
+                                    <TableHeader key={header.key} {...getHeaderProps({ header })}>
+                                        {header.header}
+                                    </TableHeader>
                                 ))}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
-        </DataTable>
+                        </TableHead>
+                        <TableBody>
+                            {rows.map((row: any) => (
+                                <TableRow key={row.id} {...getRowProps({ row })} onClick={handleOnRowClick}>
+                                    {row.cells.map((cell: any) => (
+                                        <TableCell key={cell.id}>{cell.value}</TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </DataTable>)
+            }
+            <Pagination
+                itemsPerPageText="Water bodies per page:"
+                page={1}
+                pageSize={10}
+                pageSizes={[
+                    10,
+                    20,
+                    50
+                ]}
+                totalItems={totalRows}
+                onChange={(evt: { pageSize: number, page: number }) => onTableChange(evt)}
+                size="md"
+            />
+        </div>
     )
 }
 

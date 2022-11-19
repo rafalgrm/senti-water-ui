@@ -1,53 +1,124 @@
 import { SyntheticEvent, useEffect, useState } from 'react';
+const { Heading } = require("@carbon/react")
+import WaterMaps from '../components/WaterMaps';
 import WaterTable from "../components/WaterTable";
+import WaterBodyData from "../components/WaterBodyData"
 import { loadWaters } from "../lib/load-waters";
 
-const handleOnRowClick = (evt: SyntheticEvent, setBinaryBuffer: (resp: any) => void) => {
-    const x = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
-    const y = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[2]?.innerText;
-    // console.log(evt);
-    // console.log(((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells);
-    
-    // fetch(`/api/small-map?x=${x}&y=${y}&polygon=${}`)
-    fetch(`/api/small-map?x=${x}&y=${y}`)
-    .then((response) => {
-        response.blob().then((data) => setBinaryBuffer(data))
-    })
-}
+const INIT_TABLE_LIMIT = 10;
+const INIT_TABLE_PAGE = 0;
 
-function Waters({ waters }: any) {
+function Waters({ waters, total }: any) {
+    // IMAGE
     const [binaryBuffer, setBinaryBuffer] = useState()
+    const [binaryBufferDetailed, setBinaryBufferDetailed] = useState()
     const [imgSrc, setImgSrc] = useState('')
+    const [polygonImgSrc, setPolygonImgSrc] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
+    // TABLE
+    const [isTableLoading, setIsTableLoading] = useState(true)
+    const [watersState, setWatersState] = useState(waters)
+    const [totalState, setTotalState] = useState(total)
+    const [tableLimit, setTableLimit] = useState(INIT_TABLE_LIMIT);
+    const [tablePage, setTablePage] = useState(INIT_TABLE_PAGE);
+    
     useEffect(() => {
         if (binaryBuffer !== undefined) {
             setImgSrc(URL.createObjectURL(binaryBuffer));
+            setIsLoading(false)
         }
-    }, [binaryBuffer])
+        if (binaryBufferDetailed !== undefined) {
+            setPolygonImgSrc(URL.createObjectURL(binaryBufferDetailed))
+            setIsLoading(false)
+        }
+        // TODO setError
+    }, [binaryBuffer, binaryBufferDetailed])
 
-    // console.log('uuu');
-    // console.log(waters);
+    useEffect(() => {
+        fetch(`/api/waters?limit=${tableLimit}&page=${tablePage}`).then((resp) => resp.json()).then((data) => {
+            setWatersState(data.waters)
+            setTotalState(data.total)
+            setIsTableLoading(false)
+        })
+    }, [tableLimit, tablePage])
+
+    const handleOnRowClick = (evt: SyntheticEvent) => {
+        const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[0]?.innerText;
+        const x = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
+        const y = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[2]?.innerText;
+        const rowClicked = watersState.find((row: { index: number }) => row.index?.toString() === index)
+        console.log(rowClicked.polygon_coords)
+        setIsLoading(true)
+        Promise.all([
+            fetch(`/api/small-map?x=${x}&y=${y}`),
+            fetch('/api/polygon-map', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ polygon: rowClicked?.polygon_coords }),
+            })
+        ]).then((responses) => {
+            responses[0].blob().then((data) => setBinaryBuffer(data))
+            responses[1].blob().then((data) => setBinaryBufferDetailed(data))
+        })
+    }
+
+    const tableChangeHandler = (evt: { pageSize: number, page: number }) => {
+        setIsTableLoading(true)
+        setTablePage(evt.page)
+        setTableLimit(evt.pageSize)
+    }
    
-    const rows = waters.map((water: any) => ({ id: water.index.toString(), coordX: water.centroid_coords[0], coordY: water.centroid_coords[1], polygon_length: water.polygon_coords.length, area: water.area}))
-    const headers = [{ key: 'id', header: 'DB ID'}, { key: 'coordX', header: 'centroid X' }, { key: 'coordY', header: 'centroid Y' }, { key: 'polygon_length', header: 'polygon length' }, { key: 'area', header: 'area (km^2)' }]
+    const rows = watersState.map((water: any) => ({
+        id: water.index.toString(),
+        coordX: water.centroid_coords[0],
+        coordY: water.centroid_coords[1],
+        polygon_length: water.polygon_coords.length,
+        area: water.area})
+    )
+    const headers = [
+        { key: 'id', header: 'DB ID'},
+        { key: 'coordX', header: 'centroid X' },
+        { key: 'coordY', header: 'centroid Y' },
+        { key: 'polygon_length', header: 'polygon length' },
+        { key: 'area', header: 'area (km^2)' }
+    ]
+    
     return (
         <div className="cds--css-grid">
-            <div className="cds--col-span-6 cds--css-grid-column">
+            <div className="cds--col-span-9 cds--css-grid-column">
+                <Heading style={{ "marginBottom": "12px" }}>Water bodies</Heading>
                 <WaterTable
                     rows={rows}
                     headers={headers}
-                    handleOnRowClick={(evt: SyntheticEvent) => handleOnRowClick(evt, setBinaryBuffer)}
+                    handleOnRowClick={(evt: SyntheticEvent) => handleOnRowClick(evt)}
+                    totalRows={totalState}
+                    onTableChange={tableChangeHandler}
+                    isTableLoading={isTableLoading}
                 />
             </div>
-            <div className="cds--col-span-2 cds--css-grid-column">
-                <img src={imgSrc}/>
+            <div className="cds--col-span-7 cds--css-grid-column">
+                <Heading style={{ "marginBottom": "12px" }}>Details</Heading>
+                <WaterBodyData
+                    name="Test name"
+                    description='test descirpion'
+                />
+                <WaterMaps
+                    smallMapUrl={polygonImgSrc}
+                    bigMapUrl={imgSrc}
+                    isLoading={isLoading}
+                    emptyMessage="Click on item on the table to the left"
+                />
             </div>
         </div>
     );
 }
 
 export async function getStaticProps() {
-    const waters = await loadWaters()
-    return { props: { waters } }
+    const { waters, total } = await loadWaters(INIT_TABLE_LIMIT, INIT_TABLE_PAGE)
+    console.log({waters})
+    return { props: { waters, total } }
 }
 
 export default Waters;

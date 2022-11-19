@@ -1,13 +1,4 @@
-const { IamAuthenticator } = require('ibm-cloud-sdk-core');
 const { CloudantV1 } = require('@ibm-cloud/cloudant');
-
-// interface waterJsonType {
-//     doc: {
-//         type: string,
-//         properties: { idx: string },
-//         geometry: { coordinates: number[] }
-//     }
-// }
 
 interface waterJsonType {
     doc: {
@@ -37,16 +28,11 @@ interface waterJsonType {
     }
 }
 
-// const shapeWaters = (waterJson: waterJsonType) => ({
-//     index: waterJson?.doc?.properties?.idx,
-//     coords: waterJson?.doc?.geometry?.coordinates,
-// });
-
 const shapeWaters = (waterJson: waterJsonType) => ({
     index: waterJson?.doc?.properties?.idx,
     area: waterJson?.doc?.properties?.area,
-    centroid_coords: waterJson?.doc?.features[0]?.geometry?.coordinates,
-    polygon_coords: waterJson?.doc?.features[1]?.geometry?.coordinates
+    centroid_coords: waterJson?.doc?.features?.[0]?.geometry?.coordinates,
+    polygon_coords: waterJson?.doc?.features?.[1]?.geometry?.coordinates
 });
 
 function goodId(id: string) {
@@ -54,36 +40,23 @@ function goodId(id: string) {
     return false
 }
 
-export async function loadWaters() {
+export async function loadWaters(limit: number, page: number) {
 
-    // const service = CloudantV1.newInstance({
-    //     serviceName: "CLOUDANT_SENTI"
-    // });
-
-    const authenticator = new IamAuthenticator({
-        apikey: ''
+    const service = CloudantV1.newInstance({
+        serviceName: "CLOUDANT_SENTI"
     });
-
-    const service = new CloudantV1({
-        authenticator: authenticator
-    });
-
-    service.setServiceUrl('');
 
     const result = await service.postAllDocs({
         db: 'senti-water-polygons',
         includeDocs: true,
-        limit: 1000000
+        limit: limit,
+        skip: page * limit,
     }).then((response: any) => {
+        console.log(response.result)
         return response.result
     });
 
-    // console.log('aaa');
-    // console.log(result.rows);
-    console.log(result.rows[0].doc.features[0].geometry);
-    // console.log(result.rows[0].doc.features[1].geometry);
-    // console.log(result.rows[0].doc);
-    
-    return result.rows.filter((row: waterJsonType) => row?.doc?.type === "FeatureCollection" && goodId(row?.doc?._id)).map(shapeWaters);
+    //filter((row: waterJsonType) => row?.doc?.type === "FeatureCollection" && goodId(row?.doc?._id)
+    return { waters: result.rows.map(shapeWaters), total: result.total_rows };
 }
   

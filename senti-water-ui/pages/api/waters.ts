@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { loadWaters } from '../../lib/load-waters'
 
-type Data = {
-  name: string
-}
-
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse<any>
 ) {
-  res.status(200).json({ name: 'John Doe' })
+  const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit) : 10
+  const page = typeof req.query.page === 'string' ? parseInt(req.query.page): 0
+  const waters = await loadWaters(limit, page)
+  res.status(200).send(waters)
 }
