@@ -6,7 +6,7 @@ import WaterBodyData from "../components/WaterBodyData"
 import { loadWaters } from "../lib/load-waters";
 
 const INIT_TABLE_LIMIT = 10;
-const INIT_TABLE_PAGE = 0;
+const INIT_TABLE_PAGE = 1;
 
 function Waters({ waters, total }: any) {
     // IMAGE
@@ -21,6 +21,8 @@ function Waters({ waters, total }: any) {
     const [totalState, setTotalState] = useState(total)
     const [tableLimit, setTableLimit] = useState(INIT_TABLE_LIMIT);
     const [tablePage, setTablePage] = useState(INIT_TABLE_PAGE);
+    // DATA
+    const [rowClicked, setRowClicked] = useState()
     
     useEffect(() => {
         if (binaryBuffer !== undefined) {
@@ -43,12 +45,13 @@ function Waters({ waters, total }: any) {
     }, [tableLimit, tablePage])
 
     const handleOnRowClick = (evt: SyntheticEvent) => {
-        const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[0]?.innerText;
-        const x = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
-        const y = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[2]?.innerText;
-        const rowClicked = watersState.find((row: { index: number }) => row.index?.toString() === index)
-        console.log(rowClicked.polygon_coords)
+        // TODO make reading not by name
+        const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
+        const rowClicked = watersState.find((row: { index: string }) => row.index?.toString() === index)
+        setRowClicked(rowClicked)
         setIsLoading(true)
+        const x = rowClicked.centroid_coords[0]
+        const y = rowClicked.centroid_coords[1]
         Promise.all([
             fetch(`/api/small-map?x=${x}&y=${y}`),
             fetch('/api/polygon-map', {
@@ -70,18 +73,18 @@ function Waters({ waters, total }: any) {
         setTableLimit(evt.pageSize)
     }
    
-    const rows = watersState.map((water: any) => ({
-        id: water.index.toString(),
-        coordX: water.centroid_coords[0],
-        coordY: water.centroid_coords[1],
-        polygon_length: water.polygon_coords.length,
+    const rows = watersState.map((water: any, index: number) => ({
+        id: (index + 1) + (tablePage - 1) * tableLimit,
+        name: water.name !== "" ? water.name : water.index,
+        coordX: Intl.NumberFormat('en', { maximumFractionDigits: 4, maximumSignificantDigits: 7 }).format(water.centroid_coords[0]),
+        coordY: Intl.NumberFormat('en', { maximumFractionDigits: 4, maximumSignificantDigits: 7 }).format(water.centroid_coords[1]),
         area: water.area})
     )
     const headers = [
-        { key: 'id', header: 'DB ID'},
-        { key: 'coordX', header: 'centroid X' },
-        { key: 'coordY', header: 'centroid Y' },
-        { key: 'polygon_length', header: 'polygon length' },
+        { key: 'id', header: 'Table ID'},
+        { key: 'name', header: 'Name'},
+        { key: 'coordY', header: 'Lattitude' },
+        { key: 'coordX', header: 'Longitude' },
         { key: 'area', header: 'area (km^2)' }
     ]
     
@@ -101,8 +104,13 @@ function Waters({ waters, total }: any) {
             <div className="cds--col-span-7 cds--css-grid-column">
                 <Heading style={{ "marginBottom": "12px" }}>Details</Heading>
                 <WaterBodyData
-                    name="Test name"
-                    description='test descirpion'
+                    name={rowClicked?.name}
+                    description={rowClicked?.description}
+                    centralCoords={[rowClicked?.centroid_coords?.[0], rowClicked?.centroid_coords?.[1]]}
+                    surfaceArea={rowClicked?.area}
+                    polygonLength={rowClicked?.polygon_coords?.length}
+                    satTimestamp={rowClicked?.timestamp}
+                    id={rowClicked?.index}
                 />
                 <WaterMaps
                     smallMapUrl={polygonImgSrc}
@@ -117,7 +125,6 @@ function Waters({ waters, total }: any) {
 
 export async function getStaticProps() {
     const { waters, total } = await loadWaters(INIT_TABLE_LIMIT, INIT_TABLE_PAGE)
-    console.log({waters})
     return { props: { waters, total } }
 }
 

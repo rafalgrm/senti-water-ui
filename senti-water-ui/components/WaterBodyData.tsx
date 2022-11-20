@@ -1,5 +1,7 @@
 import { Tile } from "@carbon/react"
+import { useState } from "react";
 import styles from "../styles/WaterBody.module.scss"
+import WaterBodyEditableData from "./WaterBodyEditableData";
 
 type WaterBodyDataProps = {
     name: string,
@@ -7,21 +9,23 @@ type WaterBodyDataProps = {
     centralCoords: number[],
     surfaceArea: number,
     satTimestamp: string,
-    polygon: [x: number, y: number][]
+    polygonLength: number,
+    id: string,
 };
 
 const invalidFormatString = <div style={{ color: "red"}}>Invalid format</div>
 
 const centralCoordsToString = (coords: number[]) => {
     if (coords && coords.length === 2) {
-        return `${coords[0]}, ${coords[1]}`
+        return `${Intl.NumberFormat('en', { maximumFractionDigits: 6, maximumSignificantDigits: 5 }).format(coords[1])}°N, ` +
+                `${Intl.NumberFormat('en', { maximumFractionDigits: 6, maximumSignificantDigits: 5 }).format(coords[0])}°E`
     }
     return invalidFormatString
 }
 
 const areaToString = (area: number) => {
     if (area !== undefined) {
-        return Intl.NumberFormat('en', { maximumFractionDigits: 3, maximumSignificantDigits: 4 }).format(area)
+        return Intl.NumberFormat('en', { maximumFractionDigits: 3, maximumSignificantDigits: 4 }).format(area) + " km²"
     }
     return invalidFormatString
 }
@@ -32,8 +36,19 @@ const WaterBodyData = ({
     centralCoords,
     surfaceArea,
     satTimestamp,
-    polygon
+    polygonLength,
+    id,
 }: WaterBodyDataProps) => {
+
+    const [waterBodyEditMode, setWaterBodyEditMode] = useState(true)
+
+    const onSaveClick = (name: string, description: string) => {
+        fetch(`/api/edit-waters?id=${id}&name=${name}&description=${description}`).then((response) => {
+            console.log(response)
+            setWaterBodyEditMode(false)
+        })
+    }
+
     return (
         <div style={{
             "display": "flex",
@@ -42,21 +57,27 @@ const WaterBodyData = ({
             "alignItems": "stretch",
             "justifyContent": "space-between"
         }}>
-            <Tile light style={{ "flex": 1, "marginRight": "8px" }}>
-                <div className={styles.dataLabel}>Name</div>
-                <div>{name}</div>
-                <div className={styles.dataLabel}>Description</div>
-                <div>{description}</div>
-            </Tile>
+            {
+                waterBodyEditMode ?
+                <WaterBodyEditableData
+                    onSaveClick={onSaveClick}
+                /> :
+                <Tile light style={{ "flex": 1, "marginRight": "8px" }}>
+                    <div className={styles.dataLabel}>Name</div>
+                    <div>{name}</div>
+                    <div className={styles.dataLabel}>Description</div>
+                    <div>{description}</div>
+                </Tile>
+            }
             <Tile light style={{ "flex": 1, "marginRight": "8px" }}>
                 <div className={styles.dataLabel}>Centroid coordinates</div>
                 <div>{centralCoordsToString(centralCoords)}</div>
                 <div className={styles.dataLabel}>Surface area</div>
                 <div>{areaToString(surfaceArea)}</div>
                 <div className={styles.dataLabel}>Satellite data timestamp</div>
-                <div>{satTimestamp}</div>
+                <div>{satTimestamp || "Not set"}</div>
                 <div className={styles.dataLabel}>Polygon length</div>
-                <div>TODO</div>
+                <div>{polygonLength}</div>
             </Tile>
         </div>
       
