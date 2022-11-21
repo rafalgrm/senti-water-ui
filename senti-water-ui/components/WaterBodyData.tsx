@@ -1,4 +1,4 @@
-import { Tile } from "@carbon/react"
+import { Tile, Button } from "@carbon/react"
 import { useState } from "react";
 import styles from "../styles/WaterBody.module.scss"
 import WaterBodyEditableData from "./WaterBodyEditableData";
@@ -40,13 +40,17 @@ const WaterBodyData = ({
     id,
 }: WaterBodyDataProps) => {
 
-    const [waterBodyEditMode, setWaterBodyEditMode] = useState(true)
+    const [waterBodyEditMode, setWaterBodyEditMode] = useState(false)
 
     const onSaveClick = (name: string, description: string) => {
         fetch(`/api/edit-waters?id=${id}&name=${name}&description=${description}`).then((response) => {
             console.log(response)
             setWaterBodyEditMode(false)
         })
+    }
+
+    const changeEditMode = (evt) => {
+        setWaterBodyEditMode(!waterBodyEditMode)
     }
 
     return (
@@ -60,13 +64,17 @@ const WaterBodyData = ({
             {
                 waterBodyEditMode ?
                 <WaterBodyEditableData
+                    changeEditMode={changeEditMode}
                     onSaveClick={onSaveClick}
+                    name={name}
+                    description={description}
                 /> :
                 <Tile light style={{ "flex": 1, "marginRight": "8px" }}>
                     <div className={styles.dataLabel}>Name</div>
                     <div>{name}</div>
                     <div className={styles.dataLabel}>Description</div>
                     <div>{description}</div>
+                    <Button size="sm" onClick={changeEditMode}>Edit</Button>
                 </Tile>
             }
             <Tile light style={{ "flex": 1, "marginRight": "8px" }}>

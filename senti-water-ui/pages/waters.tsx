@@ -46,8 +46,10 @@ function Waters({ waters, total }: any) {
 
     const handleOnRowClick = (evt: SyntheticEvent) => {
         // TODO make reading not by name
-        const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
-        const rowClicked = watersState.find((row: { index: string }) => row.index?.toString() === index)
+        // const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
+        // const rowClicked = watersState.find((row: { index: string }) => row.index?.toString() === index)
+        const tableID = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[0]?.innerText;
+        const rowClicked = watersState[(parseInt(tableID) - 1) % tableLimit]
         setRowClicked(rowClicked)
         setIsLoading(true)
         const x = rowClicked.centroid_coords[0]
@@ -74,6 +76,7 @@ function Waters({ waters, total }: any) {
     }
    
     const rows = watersState.map((water: any, index: number) => ({
+        index: water.index,
         id: (index + 1) + (tablePage - 1) * tableLimit,
         name: water.name !== "" ? water.name : water.index,
         coordX: Intl.NumberFormat('en', { maximumFractionDigits: 4, maximumSignificantDigits: 7 }).format(water.centroid_coords[0]),

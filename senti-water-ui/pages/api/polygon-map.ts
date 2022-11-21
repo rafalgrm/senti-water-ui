@@ -12,6 +12,6 @@ export default async function handler(
           "type": "Polygon",
           "coordinates": [polygon.map((point: any) => [point[0].toString(), point[1].toString()])],
         },
-    }, zoom: 10.0 })
+    }, zoom: 14.0 })
     res.status(200).send(imageBinaryBuffer)
 }
