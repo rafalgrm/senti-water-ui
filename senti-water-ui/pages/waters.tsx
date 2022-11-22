@@ -21,8 +21,10 @@ function Waters({ waters, total }: any) {
     const [totalState, setTotalState] = useState(total)
     const [tableLimit, setTableLimit] = useState(INIT_TABLE_LIMIT);
     const [tablePage, setTablePage] = useState(INIT_TABLE_PAGE);
+    const [reload, setReload] = useState(false);
     // DATA
     const [rowClicked, setRowClicked] = useState()
+    const [prevTableId, setPrevTableId] = useState('')
     
     useEffect(() => {
         if (binaryBuffer !== undefined) {
@@ -44,12 +46,44 @@ function Waters({ waters, total }: any) {
         })
     }, [tableLimit, tablePage])
 
+    const reloadTable = () => {
+        setReload(!reload)
+    }
+
+    useEffect(() => {
+        fetch(`/api/waters?limit=${tableLimit}&page=${tablePage}`).then((resp) => resp.json()).then((data) => {
+            setWatersState(data.waters)
+            setIsTableLoading(false)
+        })
+    }, [reload])
+
+    useEffect(() => {
+        if (prevTableId !== '') {
+            const rowClicked = watersState[(parseInt(prevTableId) - 1) % tableLimit]
+            setRowClicked(rowClicked)
+            setIsLoading(true)
+            const x = rowClicked.centroid_coords[0]
+            const y = rowClicked.centroid_coords[1]
+            Promise.all([
+                fetch(`/api/small-map?x=${x}&y=${y}`),
+                fetch('/api/polygon-map', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ polygon: rowClicked?.polygon_coords }),
+                })
+            ]).then((responses) => {
+                responses[0].blob().then((data) => setBinaryBuffer(data))
+                responses[1].blob().then((data) => setBinaryBufferDetailed(data))
+            })
+        }
+    }, [watersState])
+
     const handleOnRowClick = (evt: SyntheticEvent) => {
-        // TODO make reading not by name
-        // const index = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[1]?.innerText;
-        // const rowClicked = watersState.find((row: { index: string }) => row.index?.toString() === index)
-        const tableID = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[0]?.innerText;
-        const rowClicked = watersState[(parseInt(tableID) - 1) % tableLimit]
+        const tableId = ((evt.target as HTMLElement)?.parentNode as HTMLTableRowElement)?.cells[0]?.innerText;
+        setPrevTableId(tableId)
+        const rowClicked = watersState[(parseInt(tableId) - 1) % tableLimit]
         setRowClicked(rowClicked)
         setIsLoading(true)
         const x = rowClicked.centroid_coords[0]
@@ -83,6 +117,7 @@ function Waters({ waters, total }: any) {
         coordY: Intl.NumberFormat('en', { maximumFractionDigits: 4, maximumSignificantDigits: 7 }).format(water.centroid_coords[1]),
         area: water.area})
     )
+
     const headers = [
         { key: 'id', header: 'Table ID'},
         { key: 'name', header: 'Name'},
@@ -114,6 +149,7 @@ function Waters({ waters, total }: any) {
                     polygonLength={rowClicked?.polygon_coords?.length}
                     satTimestamp={rowClicked?.timestamp}
                     id={rowClicked?.index}
+                    reloadTable={reloadTable}
                 />
                 <WaterMaps
                     smallMapUrl={polygonImgSrc}
