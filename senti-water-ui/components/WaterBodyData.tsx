@@ -11,6 +11,7 @@ type WaterBodyDataProps = {
     satTimestamp: string,
     polygonLength: number,
     id: string,
+    reloadTable: any
 };
 
 const invalidFormatString = <div style={{ color: "red"}}>Invalid format</div>
@@ -38,6 +39,7 @@ const WaterBodyData = ({
     satTimestamp,
     polygonLength,
     id,
+    reloadTable,
 }: WaterBodyDataProps) => {
 
     const [waterBodyEditMode, setWaterBodyEditMode] = useState(false)
@@ -46,6 +48,7 @@ const WaterBodyData = ({
         fetch(`/api/edit-waters?id=${id}&name=${name}&description=${description}`).then((response) => {
             console.log(response)
             setWaterBodyEditMode(false)
+            reloadTable()
         })
     }
 
@@ -88,7 +91,6 @@ const WaterBodyData = ({
                 <div>{polygonLength}</div>
             </Tile>
         </div>
-      
     );
 }
 
