@@ -1,6 +1,6 @@
 # Senti Water UI
 
-It is a Simple React application that shows data from [our project](https://github.com/rafalgrm/senti-water)
+It is a Simple React application that shows data from [our project](https://github.com/rafalgrm/senti-water)<br>
 Technologies: React + Typescript + Next.js
 
 ## Getting Started
