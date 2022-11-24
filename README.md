@@ -18,7 +18,7 @@ CLOUDANT_SENTI_APIKEY=[your APIKEY]
 CLOUDANT_SENTI_URL=[your URL]
 ```
 
-To run the development server:
+Run the development server:
 ```bash
 npm run dev
 # or
