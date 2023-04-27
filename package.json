@@ -10,21 +10,30 @@
     },
     "dependencies": {
         "@carbon/react": "^1.16.0",
+        "@emotion/react": "^11.10.6",
+        "@emotion/styled": "^11.10.6",
         "@ibm-cloud/cloudant": "^0.3.0",
+        "@mui/material": "^5.12.2",
         "@types/node": "18.11.9",
         "@types/react": "18.0.25",
         "@types/react-dom": "18.0.8",
+        "app-utils": "^0.1.0",
         "eslint": "8.27.0",
         "eslint-config-next": "13.0.2",
+        "leaflet": "^1.9.3",
+        "leaflet-draw": "^1.0.4",
+        "mui": "^0.0.1",
         "next": "13.0.2",
         "osm-static-maps": "^3.4.0",
         "puppeteer": "^19.2.2",
         "react": "18.2.0",
         "react-dom": "18.2.0",
+        "react-leaflet": "^4.2.1",
+        "react-leaflet-draw": "^0.20.4",
         "typescript": "4.8.4"
     },
     "devDependencies": {
-        "sass": "^1.56.1",
-        "puppeteer": "19.2.2"
+        "puppeteer": "19.2.2",
+        "sass": "^1.56.1"
     }
 }
